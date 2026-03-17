@@ -1,3 +1,5 @@
+import FeatureCard from "../components/FeatureCard";
+
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-white text-black">
@@ -21,8 +23,8 @@ export default function HomePage() {
         </h2>
 
         <p className="mt-6 max-w-2xl text-lg text-gray-600 md:text-xl">
-          Create courses, upload study materials, ask AI questions, and
-          generate quizzes based on your own learning content.
+          Create courses, upload study materials, ask AI questions, and generate
+          quizzes based on your own learning content.
         </p>
 
         <div className="mt-8 flex flex-col gap-4 sm:flex-row">
@@ -41,29 +43,20 @@ export default function HomePage() {
         </h3>
 
         <div className="grid gap-6 md:grid-cols-3">
-          <div className="rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <h4 className="mb-3 text-xl font-semibold">Create Courses</h4>
-            <p className="text-gray-600">
-              Organize your learning into separate courses like math, CS, or
-              exam prep.
-            </p>
-          </div>
+          <FeatureCard
+            title="Create Courses"
+            description="Organize your learning into separate courses like math, CS, or exam prep."
+          />
 
-          <div className="rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <h4 className="mb-3 text-xl font-semibold">Ask AI Questions</h4>
-            <p className="text-gray-600">
-              Get answers grounded in your uploaded notes, lectures, and study
-              materials.
-            </p>
-          </div>
+          <FeatureCard
+            title="Ask AI Questions"
+            description="Get answers grounded in your uploaded notes, lectures, and study materials."
+          />
 
-          <div className="rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <h4 className="mb-3 text-xl font-semibold">Generate Practice</h4>
-            <p className="text-gray-600">
-              Turn your documents into quizzes, review questions, and study
-              prompts automatically.
-            </p>
-          </div>
+          <FeatureCard
+            title="Generate Practice"
+            description="Turn your documents into quizzes, review questions, and study prompts automatically."
+          />
         </div>
       </section>
     </main>
