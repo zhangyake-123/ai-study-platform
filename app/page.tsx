@@ -1,4 +1,5 @@
 import FeatureCard from "../components/FeatureCard";
+import Link from "next/link";
 
 export default function HomePage() {
   return (
@@ -28,9 +29,12 @@ export default function HomePage() {
         </p>
 
         <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-          <button className="rounded-xl bg-black px-6 py-3 text-white transition hover:opacity-80">
+          <Link
+            href="/dashboard"
+            className="rounded-xl bg-black px-6 py-3 text-white transition hover:opacity-80"
+          >
             Start Building
-          </button>
+          </Link>
           <button className="rounded-xl border border-gray-300 px-6 py-3 transition hover:bg-gray-100">
             View Features
           </button>
