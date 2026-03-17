@@ -1,26 +1,71 @@
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-white text-black">
-      <div className="mx-auto flex min-h-screen max-w-4xl flex-col items-center justify-center px-6 text-center">
-        <h1 className="mb-6 text-4xl font-bold md:text-6xl">
-          AI Study Platform
-        </h1>
+      <nav className="border-b border-gray-200">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <h1 className="text-xl font-bold">AI Study Platform</h1>
+          <div className="flex gap-3">
+            <button className="rounded-lg px-4 py-2 text-sm hover:bg-gray-100">
+              Log In
+            </button>
+            <button className="rounded-lg bg-black px-4 py-2 text-sm text-white hover:opacity-80">
+              Sign Up
+            </button>
+          </div>
+        </div>
+      </nav>
 
-        <p className="mb-8 max-w-2xl text-lg text-gray-600 md:text-xl">
-          Create your own courses, upload study materials, ask AI questions,
-          and generate practice quizzes.
+      <section className="mx-auto flex max-w-6xl flex-col items-center px-6 py-20 text-center">
+        <h2 className="max-w-4xl text-4xl font-bold leading-tight md:text-6xl">
+          Build your own AI-powered study workspace
+        </h2>
+
+        <p className="mt-6 max-w-2xl text-lg text-gray-600 md:text-xl">
+          Create courses, upload study materials, ask AI questions, and
+          generate quizzes based on your own learning content.
         </p>
 
-        <div className="flex flex-col gap-4 sm:flex-row">
+        <div className="mt-8 flex flex-col gap-4 sm:flex-row">
           <button className="rounded-xl bg-black px-6 py-3 text-white transition hover:opacity-80">
-            Get Started
+            Start Building
           </button>
-
           <button className="rounded-xl border border-gray-300 px-6 py-3 transition hover:bg-gray-100">
-            Learn More
+            View Features
           </button>
         </div>
-      </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-20">
+        <h3 className="mb-8 text-center text-2xl font-semibold">
+          Core Features
+        </h3>
+
+        <div className="grid gap-6 md:grid-cols-3">
+          <div className="rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <h4 className="mb-3 text-xl font-semibold">Create Courses</h4>
+            <p className="text-gray-600">
+              Organize your learning into separate courses like math, CS, or
+              exam prep.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <h4 className="mb-3 text-xl font-semibold">Ask AI Questions</h4>
+            <p className="text-gray-600">
+              Get answers grounded in your uploaded notes, lectures, and study
+              materials.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <h4 className="mb-3 text-xl font-semibold">Generate Practice</h4>
+            <p className="text-gray-600">
+              Turn your documents into quizzes, review questions, and study
+              prompts automatically.
+            </p>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
