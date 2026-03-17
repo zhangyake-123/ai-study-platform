@@ -1,3 +1,5 @@
+import CourseCard from "../../components/CourseCard";
+
 export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-gray-50 text-black">
@@ -16,35 +18,23 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold">CPSC 210</h2>
-            <p className="mt-2 text-gray-600">
-              Java programming, OOP, and software construction.
-            </p>
-            <button className="mt-4 rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-100">
-              Open Course
-            </button>
-          </div>
+          <CourseCard
+            title="CPSC 213"
+            description="Computer systems, C programming, memory, and assembly concepts." 
+            buttonText="Open Course"
+          />
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold">PHIL 220</h2>
-            <p className="mt-2 text-gray-600">
-              Truth tables, quantifiers, validity, and tree methods.
-            </p>
-            <button className="mt-4 rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-100">
-              Open Course
-            </button>
-          </div>
+          <CourseCard
+            title="PHIL 220"
+            description="Truth tables, quantifiers, logical validity, and tree methods." 
+            buttonText="Open Course"
+          />
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold">MATH 221</h2>
-            <p className="mt-2 text-gray-600">
-              Matrices, vectors, linear transformations, and eigenvalues.
-            </p>
-            <button className="mt-4 rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-100">
-              Open Course
-            </button>
-          </div>
+          <CourseCard
+            title="MATH 221"
+            description="Matrices, vector spaces, eigenvalues, and linear transformations." 
+            buttonText="Open Course"
+          />
         </div>
       </div>
     </main>
