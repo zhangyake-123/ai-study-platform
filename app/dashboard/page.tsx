@@ -3,27 +3,37 @@ import CourseCard from "../../components/CourseCard";
 export default function DashboardPage() {
   const courses = [
     {
+      id: "cpsc-213",
       title: "CPSC 213",
       description:
         "Computer systems, C programming, memory, and assembly concepts.",
       buttonText: "Open Course",
     },
     {
+      id: "phil-220",
       title: "PHIL 220",
       description:
         "Truth tables, quantifiers, logical validity, and tree methods.",
       buttonText: "Open Course",
     },
     {
+      id: "math-221",
       title: "MATH 221",
       description:
         "Matrices, vector spaces, eigenvalues, and linear transformations.",
       buttonText: "Open Course",
     },
     {
+      id: "dsci-100",
       title: "DSCI 100",
       description:
         "Introduction to data science, visualization, wrangling, and basic modeling.",
+      buttonText: "Open Course",
+    },
+    {
+      id: "cpsc-210",
+      title: "CPSC 210",
+      description: "Java programming, OOP, and software construction.",
       buttonText: "Open Course",
     },
   ];
@@ -47,7 +57,8 @@ export default function DashboardPage() {
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {courses.map((course) => (
             <CourseCard
-              key={course.title}
+              key={course.id}
+              id={course.id}
               title={course.title}
               description={course.description}
               buttonText={course.buttonText}
