@@ -1,14 +1,19 @@
 import Link from "next/link";
+import FileCard from "../../../components/FileCard";
 
 type CoursePageProps = {
-  params?: {
-    courseId?: string;
-  };
+  params?:
+    | {
+        courseId?: string;
+      }
+    | Promise<{
+        courseId?: string;
+      }>;
 };
 
 function formatCourseName(courseId?: string) {
   if (!courseId) {
-    return "Course";
+    return "Course Workspace";
   }
 
   return courseId
@@ -17,8 +22,27 @@ function formatCourseName(courseId?: string) {
     .join(" ");
 }
 
-export default function CoursePage({ params }: CoursePageProps) {
-  const courseName = formatCourseName(params?.courseId);
+export default async function CoursePage({ params }: CoursePageProps) {
+  const resolvedParams = params ? await params : undefined;
+  const courseName = formatCourseName(resolvedParams?.courseId);
+
+  const sampleFiles = [
+    {
+      fileName: "Lecture_01_Introduction.pdf",
+      fileType: "PDF",
+      status: "Ready",
+    },
+    {
+      fileName: "Midterm_Review_Notes.md",
+      fileType: "Markdown",
+      status: "Processed",
+    },
+    {
+      fileName: "Assignment_2_Guide.pdf",
+      fileType: "PDF",
+      status: "Ready",
+    },
+  ];
 
   return (
     <main className="min-h-screen bg-gray-50 text-black">
@@ -37,9 +61,9 @@ export default function CoursePage({ params }: CoursePageProps) {
           <h1 className="mt-2 text-4xl font-bold">{courseName}</h1>
 
           <p className="mt-4 max-w-3xl text-lg text-gray-600">
-            This is your course workspace. Later, you will upload files, ask AI
-            questions based on your materials, and generate practice quizzes
-            here.
+            This workspace helps you organize course materials, ask AI
+            questions, and generate personalized practice from your own
+            documents.
           </p>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -55,27 +79,48 @@ export default function CoursePage({ params }: CoursePageProps) {
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold">Files</h2>
-            <p className="mt-2 text-gray-600">
-              Uploaded study materials will appear here.
-            </p>
-          </div>
+        <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+          <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+              <div>
+                <h2 className="text-2xl font-semibold">Study Materials</h2>
+                <p className="mt-2 text-gray-600">
+                  Upload and manage your course documents here.
+                </p>
+              </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold">AI Chat</h2>
-            <p className="mt-2 text-gray-600">
-              Ask course-specific questions based on your notes, slides, and
-              documents.
-            </p>
-          </div>
+              <button className="rounded-xl bg-black px-5 py-3 text-white transition hover:opacity-80">
+                Upload File
+              </button>
+            </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold">Quizzes</h2>
-            <p className="mt-2 text-gray-600">
-              Generate review questions, practice sets, and quiz sessions.
-            </p>
+            <div className="grid gap-4">
+              {sampleFiles.map((file) => (
+                <FileCard
+                  key={file.fileName}
+                  fileName={file.fileName}
+                  fileType={file.fileType}
+                  status={file.status}
+                />
+              ))}
+            </div>
+          </section>
+
+          <div className="grid gap-6">
+            <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="text-xl font-semibold">AI Chat</h2>
+              <p className="mt-2 text-gray-600">
+                Ask course-specific questions based on your notes, slides, and
+                uploaded files.
+              </p>
+            </section>
+
+            <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="text-xl font-semibold">Quizzes</h2>
+              <p className="mt-2 text-gray-600">
+                Generate review questions, practice sets, and quiz sessions.
+              </p>
+            </section>
           </div>
         </div>
       </div>
