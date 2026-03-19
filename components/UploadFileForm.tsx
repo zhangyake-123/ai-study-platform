@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
+import { extractTextFromFile } from "../lib/extractText";
 
 type UploadFileFormProps = {
   courseId: string;
@@ -47,37 +48,62 @@ export default function UploadFileForm({ courseId }: UploadFileFormProps) {
         return;
       }
 
-      const { error: dbError } = await supabase.from("course_files").insert([
-        {
-          course_slug: courseId,
-          file_name: selectedFile.name,
-          file_path: filePath,
-          file_type: fileType,
-          upload_status: "processing",
-        },
-      ]);
+      const { data: insertedFile, error: dbError } = await supabase
+        .from("course_files")
+        .insert([
+          {
+            course_slug: courseId,
+            file_name: selectedFile.name,
+            file_path: filePath,
+            file_type: fileType,
+            upload_status: "processing",
+          },
+        ])
+        .select()
+        .single();
 
-      // 模拟处理过程
-      setTimeout(async () => {
-        const { error: updateError } = await supabase
-          .from("course_files")
-          .update({ upload_status: "ready" })
-          .eq("file_path", filePath);
-
-        if (updateError) {
-          console.error("Failed to update file status:", updateError.message);
-          return;
-        }
-
-        router.refresh();
-      }, 2000);
-
-      if (dbError) {
-        setMessage(`Database save failed: ${dbError.message}`);
+      if (dbError || !insertedFile) {
+        setMessage(`Database save failed: ${dbError?.message ?? "Unknown error"}`);
         return;
       }
 
-      setMessage("File uploaded successfully.");
+      const extractedText = await extractTextFromFile(selectedFile);
+
+      if (extractedText !== null) {
+        const { error: textError } = await supabase.from("document_texts").insert([
+          {
+            course_slug: courseId,
+            course_file_id: insertedFile.id,
+            file_name: selectedFile.name,
+            raw_text: extractedText,
+          },
+        ]);
+
+        if (textError) {
+          await supabase
+            .from("course_files")
+            .update({ upload_status: "error" })
+            .eq("id", insertedFile.id);
+
+          setMessage(`Text extraction save failed: ${textError.message}`);
+          router.refresh();
+          return;
+        }
+      }
+
+      const finalStatus = extractedText !== null ? "ready" : "uploaded";
+
+      await supabase
+        .from("course_files")
+        .update({ upload_status: finalStatus })
+        .eq("id", insertedFile.id);
+
+      setMessage(
+        extractedText !== null
+          ? "File uploaded and text extracted successfully."
+          : "File uploaded successfully. Text extraction is not supported for this file type yet."
+      );
+
       setSelectedFile(null);
       router.refresh();
     } catch {
@@ -97,7 +123,9 @@ export default function UploadFileForm({ courseId }: UploadFileFormProps) {
       <div className="mt-6 grid gap-4">
         <input
           type="file"
-          onChange={(event) => setSelectedFile(event.target.files?.[0] || null)}
+          onChange={(event) =>
+            setSelectedFile(event.target.files?.[0] || null)
+          }
           className="rounded-xl border border-gray-300 px-4 py-3"
         />
 
