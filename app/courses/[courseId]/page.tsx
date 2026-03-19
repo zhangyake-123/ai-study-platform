@@ -1,6 +1,7 @@
-import UploadFileForm from "../../../components/UploadFileForm";
 import Link from "next/link";
 import FileCard from "../../../components/FileCard";
+import UploadFileForm from "../../../components/UploadFileForm";
+import { supabase } from "../../../lib/supabase";
 
 type CoursePageProps = {
   params?:
@@ -10,6 +11,13 @@ type CoursePageProps = {
     | Promise<{
         courseId?: string;
       }>;
+};
+
+type CourseFile = {
+  id: number;
+  file_name: string;
+  file_type: string;
+  upload_status: string;
 };
 
 function formatCourseName(courseId?: string) {
@@ -25,25 +33,14 @@ function formatCourseName(courseId?: string) {
 
 export default async function CoursePage({ params }: CoursePageProps) {
   const resolvedParams = params ? await params : undefined;
-  const courseName = formatCourseName(resolvedParams?.courseId);
+  const courseId = resolvedParams?.courseId;
+  const courseName = formatCourseName(courseId);
 
-  const sampleFiles = [
-    {
-      fileName: "Lecture_01_Introduction.pdf",
-      fileType: "PDF",
-      status: "Ready",
-    },
-    {
-      fileName: "Midterm_Review_Notes.md",
-      fileType: "Markdown",
-      status: "Processed",
-    },
-    {
-      fileName: "Assignment_2_Guide.pdf",
-      fileType: "PDF",
-      status: "Ready",
-    },
-  ];
+  const { data: files, error } = await supabase
+    .from("course_files")
+    .select("id, file_name, file_type, upload_status")
+    .eq("course_slug", courseId ?? "")
+    .order("created_at", { ascending: false });
 
   return (
     <main className="min-h-screen bg-gray-50 text-black">
@@ -68,9 +65,6 @@ export default async function CoursePage({ params }: CoursePageProps) {
           </p>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <button className="rounded-xl bg-black px-5 py-3 text-white transition hover:opacity-80">
-              Upload Materials
-            </button>
             <button className="rounded-xl border border-gray-300 px-5 py-3 transition hover:bg-gray-100">
               Open AI Chat
             </button>
@@ -89,17 +83,30 @@ export default async function CoursePage({ params }: CoursePageProps) {
               </p>
             </div>
 
-            <UploadFileForm courseId={params.courseId} />
+            <UploadFileForm courseId={courseId ?? ""} />
 
             <div className="mt-6 grid gap-4">
-              {sampleFiles.map((file) => (
-                <FileCard
-                  key={file.fileName}
-                  fileName={file.fileName}
-                  fileType={file.fileType}
-                  status={file.status}
-                />
-              ))}
+              {error && (
+                <p className="text-sm text-red-600">
+                  Failed to load files: {error.message}
+                </p>
+              )}
+
+              {!error && files && files.length === 0 && (
+                <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-gray-500">
+                  No files uploaded yet.
+                </div>
+              )}
+
+              {!error &&
+                files?.map((file: CourseFile) => (
+                  <FileCard
+                    key={file.id}
+                    fileName={file.file_name}
+                    fileType={file.file_type}
+                    status={file.upload_status}
+                  />
+                ))}
             </div>
           </section>
 

@@ -1,13 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 
 type UploadFileFormProps = {
   courseId: string;
 };
 
+function getFileType(fileName: string) {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+
+  if (extension === "pdf") return "PDF";
+  if (extension === "md") return "Markdown";
+  if (extension === "txt") return "Text";
+  if (extension === "doc" || extension === "docx") return "Word";
+  return "File";
+}
+
 export default function UploadFileForm({ courseId }: UploadFileFormProps) {
+  const router = useRouter();
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState("");
@@ -23,18 +36,35 @@ export default function UploadFileForm({ courseId }: UploadFileFormProps) {
       setMessage("");
 
       const filePath = `${courseId}/${Date.now()}-${selectedFile.name}`;
+      const fileType = getFileType(selectedFile.name);
 
-      const { error } = await supabase.storage
+      const { error: storageError } = await supabase.storage
         .from("course-files")
         .upload(filePath, selectedFile);
 
-      if (error) {
-        setMessage(`Upload failed: ${error.message}`);
+      if (storageError) {
+        setMessage(`Upload failed: ${storageError.message}`);
+        return;
+      }
+
+      const { error: dbError } = await supabase.from("course_files").insert([
+        {
+          course_slug: courseId,
+          file_name: selectedFile.name,
+          file_path: filePath,
+          file_type: fileType,
+          upload_status: "uploaded",
+        },
+      ]);
+
+      if (dbError) {
+        setMessage(`Database save failed: ${dbError.message}`);
         return;
       }
 
       setMessage("File uploaded successfully.");
       setSelectedFile(null);
+      router.refresh();
     } catch {
       setMessage("Something went wrong during upload.");
     } finally {
