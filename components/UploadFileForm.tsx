@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 import { extractTextFromFile } from "../lib/extractText";
+import { chunkText } from "../lib/chunkText";
 
 type UploadFileFormProps = {
   courseId: string;
@@ -70,24 +71,57 @@ export default function UploadFileForm({ courseId }: UploadFileFormProps) {
       const extractedText = await extractTextFromFile(selectedFile);
 
       if (extractedText !== null) {
-        const { error: textError } = await supabase.from("document_texts").insert([
-          {
-            course_slug: courseId,
-            course_file_id: insertedFile.id,
-            file_name: selectedFile.name,
-            raw_text: extractedText,
-          },
-        ]);
+        const { data: insertedText, error: textError } = await supabase
+          .from("document_texts")
+          .insert([
+            {
+              course_slug: courseId,
+              course_file_id: insertedFile.id,
+              file_name: selectedFile.name,
+              raw_text: extractedText,
+            },
+          ])
+          .select()
+          .single();
 
-        if (textError) {
+        if (textError || !insertedText) {
           await supabase
             .from("course_files")
             .update({ upload_status: "error" })
             .eq("id", insertedFile.id);
 
-          setMessage(`Text extraction save failed: ${textError.message}`);
+          setMessage(
+            `Text extraction save failed: ${textError?.message ?? "Unknown error"}`
+          );
           router.refresh();
           return;
+        }
+
+        const chunks = chunkText(extractedText);
+
+        if (chunks.length > 0) {
+          const chunkRows = chunks.map((chunk, index) => ({
+            course_slug: courseId,
+            course_file_id: insertedFile.id,
+            document_text_id: insertedText.id,
+            chunk_index: index,
+            content: chunk,
+          }));
+
+          const { error: chunkError } = await supabase
+            .from("document_chunks")
+            .insert(chunkRows);
+
+          if (chunkError) {
+            await supabase
+              .from("course_files")
+              .update({ upload_status: "error" })
+              .eq("id", insertedFile.id);
+
+            setMessage(`Chunk save failed: ${chunkError.message}`);
+            router.refresh();
+            return;
+          }
         }
       }
 
@@ -100,7 +134,7 @@ export default function UploadFileForm({ courseId }: UploadFileFormProps) {
 
       setMessage(
         extractedText !== null
-          ? "File uploaded and text extracted successfully."
+          ? "File uploaded, text extracted, and chunks created successfully."
           : "File uploaded successfully. Text extraction is not supported for this file type yet."
       );
 
