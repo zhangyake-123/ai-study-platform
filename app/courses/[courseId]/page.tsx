@@ -1,3 +1,4 @@
+import UploadFileForm from "../../../components/UploadFileForm";
 import Link from "next/link";
 import FileCard from "../../../components/FileCard";
 
@@ -80,21 +81,17 @@ export default async function CoursePage({ params }: CoursePageProps) {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-          <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-              <div>
-                <h2 className="text-2xl font-semibold">Study Materials</h2>
-                <p className="mt-2 text-gray-600">
-                  Upload and manage your course documents here.
-                </p>
-              </div>
-
-              <button className="rounded-xl bg-black px-5 py-3 text-white transition hover:opacity-80">
-                Upload File
-              </button>
+          <section>
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold">Study Materials</h2>
+              <p className="mt-2 text-gray-600">
+                Upload and manage your course documents here.
+              </p>
             </div>
 
-            <div className="grid gap-4">
+            <UploadFileForm courseId={params.courseId} />
+
+            <div className="mt-6 grid gap-4">
               {sampleFiles.map((file) => (
                 <FileCard
                   key={file.fileName}
