@@ -53,9 +53,24 @@ export default function UploadFileForm({ courseId }: UploadFileFormProps) {
           file_name: selectedFile.name,
           file_path: filePath,
           file_type: fileType,
-          upload_status: "uploaded",
+          upload_status: "processing",
         },
       ]);
+
+      // 模拟处理过程
+      setTimeout(async () => {
+        const { error: updateError } = await supabase
+          .from("course_files")
+          .update({ upload_status: "ready" })
+          .eq("file_path", filePath);
+
+        if (updateError) {
+          console.error("Failed to update file status:", updateError.message);
+          return;
+        }
+
+        router.refresh();
+      }, 2000);
 
       if (dbError) {
         setMessage(`Database save failed: ${dbError.message}`);
@@ -82,9 +97,7 @@ export default function UploadFileForm({ courseId }: UploadFileFormProps) {
       <div className="mt-6 grid gap-4">
         <input
           type="file"
-          onChange={(event) =>
-            setSelectedFile(event.target.files?.[0] || null)
-          }
+          onChange={(event) => setSelectedFile(event.target.files?.[0] || null)}
           className="rounded-xl border border-gray-300 px-4 py-3"
         />
 

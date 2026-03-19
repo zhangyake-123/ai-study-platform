@@ -7,16 +7,26 @@ import { supabase } from "../../lib/supabase";
 
 type Course = {
   id: number;
-  slug: string;
+  slug: string | null;
   title: string;
-  description: string;
+  description: string | null;
 };
 
 export default async function DashboardPage() {
-  const { data: courses, error } = await supabase
+  let { data: courses, error }: { data: Course[] | null; error: Error | null } =
+    await supabase
     .from("courses")
     .select("id, slug, title, description")
     .order("created_at", { ascending: false });
+
+  if (error) {
+    const fallbackQuery = await supabase
+      .from("courses")
+      .select("id, slug, title, description");
+
+    courses = fallbackQuery.data;
+    error = fallbackQuery.error;
+  }
 
   if (error) {
     return (
@@ -40,17 +50,23 @@ export default async function DashboardPage() {
 
         <CreateCourseForm />
 
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {courses?.map((course) => (
+        {courses && courses.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-gray-500">
+            No courses yet. Create your first course to get started.
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {courses?.map((course) => (
             <CourseCard
               key={course.id}
-              id={course.slug}
+              id={course.slug || String(course.id)}
               title={course.title}
-              description={course.description}
+              description={course.description || "No description provided yet."}
               buttonText="Open Course"
             />
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );
