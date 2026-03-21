@@ -58,7 +58,7 @@ def search_chunks(request: SearchRequest):
         return {
             "status": "error",
             "message": str(e),
-            "type": type(e).__name__,
+            "type": type(e).__name__, 
         }
 
 @app.get("/")
