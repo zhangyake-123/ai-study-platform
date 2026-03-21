@@ -7,10 +7,10 @@ import AIChatBox from "../../../components/AIChatBox";
 type CoursePageProps = {
   params?:
     | {
-        courseId?: string;
+        courseSlug?: string;
       }
     | Promise<{
-        courseId?: string;
+        courseSlug?: string;
       }>;
 };
 
@@ -21,12 +21,12 @@ type CourseFile = {
   upload_status: string;
 };
 
-function formatCourseName(courseId?: string) {
-  if (!courseId) {
+function formatCourseName(courseSlug?: string) {
+  if (!courseSlug) {
     return "Course Workspace";
   }
 
-  return courseId
+  return courseSlug
     .split("-")
     .map((word) => word.toUpperCase())
     .join(" ");
@@ -34,7 +34,7 @@ function formatCourseName(courseId?: string) {
 
 export default async function CoursePage({ params }: CoursePageProps) {
   const resolvedParams = params ? await params : undefined;
-  const courseSlug = resolvedParams?.courseId;
+  const courseSlug = resolvedParams?.courseSlug;
 
   if (!courseSlug) {
     return (

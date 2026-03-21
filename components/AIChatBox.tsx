@@ -6,15 +6,27 @@ type AIChatBoxProps = {
   courseSlug: string;
 };
 
+type MatchItem = {
+  id: number;
+  course_slug: string;
+  course_file_id: number;
+  document_text_id: number;
+  chunk_index: number;
+  content: string;
+  similarity: number;
+};
+
 type AskResponse = {
   status: string;
   answer?: string;
   message?: string;
+  matches?: MatchItem[];
 };
 
 export default function AIChatBox({ courseSlug }: AIChatBoxProps) {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+  const [matches, setMatches] = useState<MatchItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -28,6 +40,7 @@ export default function AIChatBox({ courseSlug }: AIChatBoxProps) {
       setIsLoading(true);
       setErrorMessage("");
       setAnswer("");
+      setMatches([]);
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_PYTHON_API_URL}/ask`,
@@ -52,6 +65,7 @@ export default function AIChatBox({ courseSlug }: AIChatBoxProps) {
       }
 
       setAnswer(result.answer || "No answer returned.");
+      setMatches(result.matches || []);
     } catch {
       setErrorMessage("Something went wrong while contacting the AI service.");
     } finally {
@@ -92,6 +106,34 @@ export default function AIChatBox({ courseSlug }: AIChatBoxProps) {
               AI Answer
             </p>
             <p className="whitespace-pre-wrap text-gray-800">{answer}</p>
+          </div>
+        )}
+
+        {matches.length > 0 && (
+          <div className="rounded-xl border border-gray-200 bg-white p-4">
+            <p className="mb-3 text-sm font-medium text-gray-500">
+              Retrieved Sources
+            </p>
+
+            <div className="grid gap-3">
+              {matches.map((match) => (
+                <div
+                  key={match.id}
+                  className="rounded-lg border border-gray-200 bg-gray-50 p-3"
+                >
+                  <p className="text-xs text-gray-500">
+                    Chunk #{match.chunk_index} · Similarity:{" "}
+                    {match.similarity.toFixed(4)}
+                  </p>
+
+                  <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">
+                    {match.content.length > 300
+                      ? `${match.content.slice(0, 300)}...`
+                      : match.content}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
