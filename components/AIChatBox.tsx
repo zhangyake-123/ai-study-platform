@@ -23,10 +23,15 @@ type AskResponse = {
   matches?: MatchItem[];
 };
 
+type ChatMessage = {
+  role: "user" | "assistant";
+  text: string;
+  matches?: MatchItem[];
+};
+
 export default function AIChatBox({ courseSlug }: AIChatBoxProps) {
   const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
-  const [matches, setMatches] = useState<MatchItem[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -36,11 +41,21 @@ export default function AIChatBox({ courseSlug }: AIChatBoxProps) {
       return;
     }
 
+    const userQuestion = question.trim();
+
     try {
       setIsLoading(true);
       setErrorMessage("");
-      setAnswer("");
-      setMatches([]);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "user",
+          text: userQuestion,
+        },
+      ]);
+
+      setQuestion("");
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_PYTHON_API_URL}/ask`,
@@ -50,7 +65,7 @@ export default function AIChatBox({ courseSlug }: AIChatBoxProps) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            query: question,
+            query: userQuestion,
             course_slug: courseSlug,
             match_count: 3,
           }),
@@ -64,8 +79,14 @@ export default function AIChatBox({ courseSlug }: AIChatBoxProps) {
         return;
       }
 
-      setAnswer(result.answer || "No answer returned.");
-      setMatches(result.matches || []);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text: result.answer || "No answer returned.",
+          matches: result.matches || [],
+        },
+      ]);
     } catch {
       setErrorMessage("Something went wrong while contacting the AI service.");
     } finally {
@@ -100,40 +121,56 @@ export default function AIChatBox({ courseSlug }: AIChatBoxProps) {
           <p className="text-sm text-red-600">{errorMessage}</p>
         )}
 
-        {answer && (
-          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-            <p className="mb-2 text-sm font-medium text-gray-500">
-              AI Answer
-            </p>
-            <p className="whitespace-pre-wrap text-gray-800">{answer}</p>
-          </div>
-        )}
+        {messages.length > 0 && (
+          <div className="grid gap-4">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={
+                  message.role === "user"
+                    ? "rounded-xl border border-gray-200 bg-blue-50 p-4"
+                    : "rounded-xl border border-gray-200 bg-gray-50 p-4"
+                }
+              >
+                <p className="mb-2 text-sm font-medium text-gray-500">
+                  {message.role === "user" ? "You" : "AI Answer"}
+                </p>
 
-        {matches.length > 0 && (
-          <div className="rounded-xl border border-gray-200 bg-white p-4">
-            <p className="mb-3 text-sm font-medium text-gray-500">
-              Retrieved Sources
-            </p>
+                <p className="whitespace-pre-wrap text-gray-800">
+                  {message.text}
+                </p>
 
-            <div className="grid gap-3">
-              {matches.map((match) => (
-                <div
-                  key={match.id}
-                  className="rounded-lg border border-gray-200 bg-gray-50 p-3"
-                >
-                  <p className="text-xs text-gray-500">
-                    Chunk #{match.chunk_index} · Similarity:{" "}
-                    {match.similarity.toFixed(4)}
-                  </p>
+                {message.role === "assistant" &&
+                  message.matches &&
+                  message.matches.length > 0 && (
+                    <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
+                      <p className="mb-3 text-sm font-medium text-gray-500">
+                        Retrieved Sources
+                      </p>
 
-                  <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">
-                    {match.content.length > 300
-                      ? `${match.content.slice(0, 300)}...`
-                      : match.content}
-                  </p>
-                </div>
-              ))}
-            </div>
+                      <div className="grid gap-3">
+                        {message.matches.map((match) => (
+                          <div
+                            key={match.id}
+                            className="rounded-lg border border-gray-200 bg-gray-50 p-3"
+                          >
+                            <p className="text-xs text-gray-500">
+                              Chunk #{match.chunk_index} · Similarity:{" "}
+                              {match.similarity.toFixed(4)}
+                            </p>
+
+                            <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">
+                              {match.content.length > 300
+                                ? `${match.content.slice(0, 300)}...`
+                                : match.content}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+              </div>
+            ))}
           </div>
         )}
       </div>
