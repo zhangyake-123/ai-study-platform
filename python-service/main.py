@@ -12,7 +12,8 @@ app = FastAPI()
 gemini_api_key = os.getenv("GEMINI_API_KEY")
 embedding_model = os.getenv("GEMINI_EMBEDDING_MODEL")
 supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_KEY")
+supabase_key = os.getenv("SUPABASE_KEY") 
+chat_model = os.getenv("GEMINI_CHAT_MODEL")
 
 genai_client = genai.Client(api_key=gemini_api_key)
 supabase: Client = create_client(supabase_url, supabase_key) 
@@ -72,7 +73,8 @@ def health_check():
     return {
         "status": "ok",
         "gemini_key_loaded": bool(gemini_api_key),
-        "embedding_model_loaded": bool(embedding_model),
+        "embedding_model_loaded": bool(embedding_model), 
+        "chat_model_loaded": bool(chat_model),
         "supabase_url_loaded": bool(supabase_url),
         "supabase_key_loaded": bool(supabase_key),
     }
@@ -154,6 +156,97 @@ def embed_pending_chunks():
             "status": "ok",
             "message": "Finished embedding pending chunks.",
             "processed_count": processed_count,
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e),
+            "type": type(e).__name__,
+        } 
+
+@app.post("/ask")
+def ask_question(request: SearchRequest):
+    try:
+        if not embedding_model:
+            return {
+                "status": "error",
+                "message": "GEMINI_EMBEDDING_MODEL is not set."
+            }
+
+        if not chat_model:
+            return {
+                "status": "error",
+                "message": "GEMINI_CHAT_MODEL is not set."
+            }
+
+        # Step 1: embed the user query
+        embedding_response = genai_client.models.embed_content(
+            model=embedding_model,
+            contents=request.query,
+        )
+        query_vector = embedding_response.embeddings[0].values
+
+        # Step 2: retrieve relevant chunks
+        rpc_result = supabase.rpc(
+            "match_document_chunks",
+            {
+                "query_embedding": query_vector,
+                "match_course_slug": request.course_slug,
+                "match_count": request.match_count,
+            },
+        ).execute()
+
+        matches = rpc_result.data or []
+
+        if len(matches) == 0:
+            return {
+                "status": "ok",
+                "query": request.query,
+                "course_slug": request.course_slug,
+                "matches": [],
+                "answer": "I could not find relevant course materials for this question."
+            }
+
+        # Step 3: build context from retrieved chunks
+        context_blocks = []
+        for match in matches:
+            context_blocks.append(
+                f"[Chunk {match['chunk_index']} | similarity={match['similarity']:.4f}]\n{match['content']}"
+            )
+
+        context_text = "\n\n".join(context_blocks)
+
+        prompt = f"""
+You are an AI tutor answering questions based only on the provided course materials.
+
+Instructions:
+- Answer the user's question using only the retrieved course material below.
+- If the material is insufficient, say so clearly.
+- Be concise but helpful.
+- Do not make up facts not supported by the provided material.
+
+User question:
+{request.query}
+
+Retrieved course material:
+{context_text}
+"""
+
+        # Step 4: generate final answer
+        response = genai_client.models.generate_content(
+            model=chat_model,
+            contents=prompt,
+        )
+
+        answer_text = response.text if hasattr(response, "text") else str(response)
+
+        return {
+            "status": "ok",
+            "query": request.query,
+            "course_slug": request.course_slug,
+            "matches": matches,
+            "answer": answer_text,
         }
 
     except Exception as e:
