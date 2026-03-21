@@ -21,12 +21,16 @@ type AskResponse = {
   answer?: string;
   message?: string;
   matches?: MatchItem[];
+  retrieval_count?: number;
+  low_confidence?: boolean;
 };
 
 type ChatMessage = {
   role: "user" | "assistant";
   text: string;
   matches?: MatchItem[];
+  retrievalCount?: number;
+  lowConfidence?: boolean;
 };
 
 export default function AIChatBox({ courseSlug }: AIChatBoxProps) {
@@ -85,6 +89,8 @@ export default function AIChatBox({ courseSlug }: AIChatBoxProps) {
           role: "assistant",
           text: result.answer || "No answer returned.",
           matches: result.matches || [],
+          retrievalCount: result.retrieval_count || 0,
+          lowConfidence: result.low_confidence || false,
         },
       ]);
     } catch {
@@ -136,9 +142,39 @@ export default function AIChatBox({ courseSlug }: AIChatBoxProps) {
                   {message.role === "user" ? "You" : "AI Answer"}
                 </p>
 
+                {message.role === "assistant" && (
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-gray-200 px-3 py-1 text-xs text-gray-700">
+                      Retrieved {message.retrievalCount ?? 0} chunks
+                    </span>
+
+                    {message.lowConfidence && (
+                      <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs text-yellow-800">
+                        Weak retrieval confidence
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 <p className="whitespace-pre-wrap text-gray-800">
                   {message.text}
                 </p>
+
+                {message.role === "assistant" &&
+                  (message.retrievalCount ?? 0) === 0 && (
+                    <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+                      No relevant course materials were retrieved for this question.
+                    </div>
+                  )}
+
+                {message.role === "assistant" &&
+                  message.lowConfidence &&
+                  (message.retrievalCount ?? 0) > 0 && (
+                    <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+                      The retrieved sources may not strongly match this question,
+                      so the answer may be less reliable.
+                    </div>
+                  )}
 
                 {message.role === "assistant" &&
                   message.matches &&

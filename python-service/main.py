@@ -189,14 +189,12 @@ def ask_question(request: SearchRequest):
                 "message": "GEMINI_CHAT_MODEL is not set."
             }
 
-        # Step 1: embed the user query
         embedding_response = genai_client.models.embed_content(
             model=embedding_model,
             contents=request.query,
         )
         query_vector = embedding_response.embeddings[0].values
 
-        # Step 2: retrieve relevant chunks
         rpc_result = supabase.rpc(
             "match_document_chunks",
             {
@@ -214,10 +212,14 @@ def ask_question(request: SearchRequest):
                 "query": request.query,
                 "course_slug": request.course_slug,
                 "matches": [],
+                "retrieval_count": 0,
+                "low_confidence": True,
                 "answer": "I could not find relevant course materials for this question."
             }
 
-        # Step 3: build context from retrieved chunks
+        top_similarity = matches[0]["similarity"] if matches else 0
+        low_confidence = top_similarity < 0.65
+
         context_blocks = []
         for match in matches:
             context_blocks.append(
@@ -242,7 +244,6 @@ Retrieved course material:
 {context_text}
 """
 
-        # Step 4: generate final answer
         response = genai_client.models.generate_content(
             model=chat_model,
             contents=prompt,
@@ -255,6 +256,8 @@ Retrieved course material:
             "query": request.query,
             "course_slug": request.course_slug,
             "matches": matches,
+            "retrieval_count": len(matches),
+            "low_confidence": low_confidence,
             "answer": answer_text,
         }
 
