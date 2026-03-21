@@ -59,10 +59,11 @@ export default async function DashboardPage() {
             {courses?.map((course) => (
             <CourseCard
               key={course.id}
-              id={course.slug || String(course.id)}
+              slug={course.slug ?? ""}
               title={course.title}
               description={course.description || "No description provided yet."}
               buttonText="Open Course"
+              disabled={!course.slug}
             />
             ))}
           </div>

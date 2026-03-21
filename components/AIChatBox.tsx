@@ -1,0 +1,100 @@
+"use client";
+
+import { useState } from "react";
+
+type AIChatBoxProps = {
+  courseSlug: string;
+};
+
+type AskResponse = {
+  status: string;
+  answer?: string;
+  message?: string;
+};
+
+export default function AIChatBox({ courseSlug }: AIChatBoxProps) {
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  async function handleAsk() {
+    if (!question.trim()) {
+      setErrorMessage("Please enter a question.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setErrorMessage("");
+      setAnswer("");
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_PYTHON_API_URL}/ask`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query: question,
+            course_slug: courseSlug,
+            match_count: 3,
+          }),
+        }
+      );
+
+      const result: AskResponse = await response.json();
+
+      if (!response.ok || result.status !== "ok") {
+        setErrorMessage(result.message || "Failed to get AI answer.");
+        return;
+      }
+
+      setAnswer(result.answer || "No answer returned.");
+    } catch {
+      setErrorMessage("Something went wrong while contacting the AI service.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <h2 className="text-xl font-semibold">AI Chat</h2>
+      <p className="mt-2 text-gray-600">
+        Ask course-specific questions based on your uploaded files.
+      </p>
+
+      <div className="mt-6 grid gap-4">
+        <textarea
+          placeholder="Ask a question about this course..."
+          value={question}
+          onChange={(event) => setQuestion(event.target.value)}
+          className="min-h-30 rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-black"
+        />
+
+        <button
+          onClick={handleAsk}
+          disabled={isLoading}
+          className="w-fit rounded-xl bg-black px-5 py-3 text-white transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isLoading ? "Asking..." : "Ask AI"}
+        </button>
+
+        {errorMessage && (
+          <p className="text-sm text-red-600">{errorMessage}</p>
+        )}
+
+        {answer && (
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <p className="mb-2 text-sm font-medium text-gray-500">
+              AI Answer
+            </p>
+            <p className="whitespace-pre-wrap text-gray-800">{answer}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

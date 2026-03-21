@@ -1,7 +1,8 @@
 import Link from "next/link";
 import FileCard from "../../../components/FileCard";
 import UploadFileForm from "../../../components/UploadFileForm";
-import { supabase } from "../../../lib/supabase";
+import { supabase } from "../../../lib/supabase"; 
+import AIChatBox from "../../../components/AIChatBox";
 
 type CoursePageProps = {
   params?:
@@ -33,13 +34,24 @@ function formatCourseName(courseId?: string) {
 
 export default async function CoursePage({ params }: CoursePageProps) {
   const resolvedParams = params ? await params : undefined;
-  const courseId = resolvedParams?.courseId;
-  const courseName = formatCourseName(courseId);
+  const courseSlug = resolvedParams?.courseId;
+
+  if (!courseSlug) {
+    return (
+      <main className="min-h-screen bg-gray-50 px-6 py-12 text-black">
+        <p className="text-red-600">
+          Missing course slug. Please reopen the course from the dashboard.
+        </p>
+      </main>
+    );
+  }
+
+  const courseName = formatCourseName(courseSlug);
 
   const { data: files, error } = await supabase
     .from("course_files")
     .select("id, file_name, file_type, upload_status")
-    .eq("course_slug", courseId ?? "")
+    .eq("course_slug", courseSlug)
     .order("created_at", { ascending: false });
 
   return (
@@ -83,7 +95,7 @@ export default async function CoursePage({ params }: CoursePageProps) {
               </p>
             </div>
 
-            <UploadFileForm courseId={courseId ?? ""} />
+            <UploadFileForm courseSlug={courseSlug} />
 
             <div className="mt-6 grid gap-4">
               {error && (
@@ -111,13 +123,8 @@ export default async function CoursePage({ params }: CoursePageProps) {
           </section>
 
           <div className="grid gap-6">
-            <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-semibold">AI Chat</h2>
-              <p className="mt-2 text-gray-600">
-                Ask course-specific questions based on your notes, slides, and
-                uploaded files.
-              </p>
-            </section>
+            
+            <AIChatBox courseSlug={courseSlug} />
 
             <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="text-xl font-semibold">Quizzes</h2>

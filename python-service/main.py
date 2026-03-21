@@ -2,12 +2,21 @@ from pydantic import BaseModel
 from fastapi import FastAPI
 from dotenv import load_dotenv
 from google import genai
-from supabase import create_client, Client
+from supabase import create_client, Client 
+from fastapi.middleware.cors import CORSMiddleware
 import os
 
 load_dotenv()
 
-app = FastAPI()
+app = FastAPI() 
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 gemini_api_key = os.getenv("GEMINI_API_KEY")
 embedding_model = os.getenv("GEMINI_EMBEDDING_MODEL")

@@ -7,7 +7,7 @@ import { extractTextFromFile } from "../lib/extractText";
 import { chunkText } from "../lib/chunkText";
 
 type UploadFileFormProps = {
-  courseId: string;
+  courseSlug: string;
 };
 
 function getFileType(fileName: string) {
@@ -20,7 +20,7 @@ function getFileType(fileName: string) {
   return "File";
 }
 
-export default function UploadFileForm({ courseId }: UploadFileFormProps) {
+export default function UploadFileForm({ courseSlug }: UploadFileFormProps) {
   const router = useRouter();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -28,6 +28,11 @@ export default function UploadFileForm({ courseId }: UploadFileFormProps) {
   const [message, setMessage] = useState("");
 
   async function handleUpload() {
+    if (!courseSlug) {
+      setMessage("Missing course slug. Please reopen this course from the dashboard.");
+      return;
+    }
+
     if (!selectedFile) {
       setMessage("Please select a file first.");
       return;
@@ -37,7 +42,7 @@ export default function UploadFileForm({ courseId }: UploadFileFormProps) {
       setIsUploading(true);
       setMessage("");
 
-      const filePath = `${courseId}/${Date.now()}-${selectedFile.name}`;
+      const filePath = `${courseSlug}/${Date.now()}-${selectedFile.name}`;
       const fileType = getFileType(selectedFile.name);
 
       const { error: storageError } = await supabase.storage
@@ -54,6 +59,7 @@ export default function UploadFileForm({ courseId }: UploadFileFormProps) {
         .insert([
           {
             course_slug: courseId,
+            course_slug: courseSlug,
             file_name: selectedFile.name,
             file_path: filePath,
             file_type: fileType,
@@ -75,7 +81,7 @@ export default function UploadFileForm({ courseId }: UploadFileFormProps) {
           .from("document_texts")
           .insert([
             {
-              course_slug: courseId,
+              course_slug: courseSlug,
               course_file_id: insertedFile.id,
               file_name: selectedFile.name,
               raw_text: extractedText,
@@ -101,7 +107,7 @@ export default function UploadFileForm({ courseId }: UploadFileFormProps) {
 
         if (chunks.length > 0) {
           const chunkRows = chunks.map((chunk, index) => ({
-            course_slug: courseId,
+            course_slug: courseSlug,
             course_file_id: insertedFile.id,
             document_text_id: insertedText.id,
             chunk_index: index,

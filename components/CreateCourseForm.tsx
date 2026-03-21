@@ -71,7 +71,7 @@ export default function CreateCourseForm() {
           placeholder="Course description"
           value={description}
           onChange={(event) => setDescription(event.target.value)}
-          className="min-h-[120px] rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-black"
+          className="min-h-30 rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-black"
         />
 
         {errorMessage && (
