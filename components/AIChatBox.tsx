@@ -14,6 +14,7 @@ type MatchItem = {
   chunk_index: number;
   content: string;
   similarity: number;
+  rerank_score?: number;
 };
 
 type AskResponse = {
@@ -73,7 +74,7 @@ export default function AIChatBox({ courseSlug }: AIChatBoxProps) {
             course_slug: courseSlug,
             match_count: 3,
           }),
-        }
+        },
       );
 
       const result: AskResponse = await response.json();
@@ -123,9 +124,7 @@ export default function AIChatBox({ courseSlug }: AIChatBoxProps) {
           {isLoading ? "Asking..." : "Ask AI"}
         </button>
 
-        {errorMessage && (
-          <p className="text-sm text-red-600">{errorMessage}</p>
-        )}
+        {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
 
         {messages.length > 0 && (
           <div className="grid gap-4">
@@ -163,7 +162,8 @@ export default function AIChatBox({ courseSlug }: AIChatBoxProps) {
                 {message.role === "assistant" &&
                   (message.retrievalCount ?? 0) === 0 && (
                     <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-                      No relevant course materials were retrieved for this question.
+                      No relevant course materials were retrieved for this
+                      question.
                     </div>
                   )}
 
@@ -171,8 +171,8 @@ export default function AIChatBox({ courseSlug }: AIChatBoxProps) {
                   message.lowConfidence &&
                   (message.retrievalCount ?? 0) > 0 && (
                     <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-                      The retrieved sources may not strongly match this question,
-                      so the answer may be less reliable.
+                      The retrieved sources may not strongly match this
+                      question, so the answer may be less reliable.
                     </div>
                   )}
 
@@ -199,6 +199,12 @@ export default function AIChatBox({ courseSlug }: AIChatBoxProps) {
                               {match.content.length > 300
                                 ? `${match.content.slice(0, 300)}...`
                                 : match.content}
+                            </p>
+
+                            <p className="text-xs text-gray-500">
+                              Chunk #{match.chunk_index} · Similarity:{match.similarity.toFixed(4)}
+                              {typeof match.rerank_score === "number" &&
+                                ` · Rerank: ${match.rerank_score.toFixed(4)}`}
                             </p>
                           </div>
                         ))}
